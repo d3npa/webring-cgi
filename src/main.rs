@@ -4,6 +4,10 @@ use std::str::FromStr;
 
 use webring_cgi::{http, webring::Webring};
 
+const LIST: &str = include_str!("includes/sites.txt");
+const INFO: &str = include_str!("includes/info.html");
+const USAGE: &str = "Must pass exactly one parameter: before | after | random";
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 struct UnknownCommandError;
 
@@ -24,10 +28,6 @@ impl FromStr for Command {
         }
     }
 }
-
-const LIST: &str = include_str!("sites.txt");
-const USAGE: &str = "Must pass exactly one parameter: before | after | random";
-const INFO: &str = include_str!("info.html");
 
 fn main() -> Result<(), anyhow::Error> {
     /* ?before=:domain ; ?after=:domain ; ?random_from=:domain */
