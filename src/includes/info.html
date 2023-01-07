@@ -7,10 +7,16 @@
   </head>
   <body>
     <h1>Haunted Webring</h1>
-    <p>a haunted webring</p>
+    <p>
+      a haunted webring. this cgi program implements a double-linked list that you can query. 
+      i'm hosting this in tokyo, and you're free to use it! or, if you prefer, 
+      you can build and host it yourself! the source code is available on 
+      <a href='https://github.com/d3npa/webring-cgi'>[github]</a>
+    </p>
+    <p>here is the <a href='?list'>[full list]</a> of domains in the webring right now</p>
     <hr>
     <h2>usage</h2>
-    <pre>usage: before | after | random</pre>
+    <pre>usage: before | after | random | list</pre>
     <h3>?before</h3>
     <pre>GET webring.cgi?before=https://pixeldreams.tokyo/</pre>
     <p>redirects to the site immediately BEFORE https://pixeldreams.tokyo/</p>
@@ -20,5 +26,18 @@
     <h3>?random</h3>
     <pre>GET webring.cgi?random=https://pixeldreams.tokyo/</pre> 
     <p>redirects to a random site in the ring EXCEPT https://pixeldreams.tokyo/</p>
+    <h3>?list</h3>
+    <pre>GET webring.cgi?list</pre>
+    <p>returns the hard-coded list of domains in the webring in text/plain</p>
+    <hr>
+    <h2>html tag</h2>
+    <p>paste this into your html and modify how you like! (don't forget to edit the domain part)</p>
+    <pre>
+&lt;p&gt;
+  &lt;a href='https://pixeldreams.tokyo/cgi-bin/webring.cgi?before=&lt;your domain&gt;'&gt;&amp;lt;&amp;lt;&amp;lt;&lt;/a&gt;
+  this site is part of the &lt;a href='https://pixeldreams.tokyo/cgi-bin/webring.cgi'&gt;[haunted webring]&lt;/a&gt; 
+  &lt;a href='https://pixeldreams.tokyo/cgi-bin/webring.cgi?after=&lt;your domain&gt;'&gt;&amp;gt;&amp;gt;&amp;gt;&lt;/a&gt;
+&lt;/p&gt;
+    </pre>
   </body>
 </html>
