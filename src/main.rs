@@ -6,7 +6,7 @@ use webring_cgi::{http, webring::Webring};
 
 const LIST: &str = include_str!("includes/sites.txt");
 const INFO: &str = include_str!("includes/info.html");
-const USAGE: &str = "Must pass exactly one parameter: before | after | random";
+const USAGE: &str = "Must pass exactly one parameter: before | after | random | list";
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 struct UnknownCommandError;
@@ -15,6 +15,7 @@ enum Command {
     BEFORE,
     AFTER,
     RANDOM,
+    LIST,
 }
 
 impl FromStr for Command {
@@ -24,6 +25,7 @@ impl FromStr for Command {
             "before" => Ok(Command::BEFORE),
             "after" => Ok(Command::AFTER),
             "random" => Ok(Command::RANDOM),
+            "list" => Ok(Command::LIST),
             _ => Err(UnknownCommandError {}),
         }
     }
@@ -49,15 +51,11 @@ fn main() -> Result<(), anyhow::Error> {
 
     let webring = Webring::new(LIST);
 
-    // webring vec could be of Url instead of String
-    if webring.index_of(site) == None {
-        http::not_found("Site not in list");
-    }
-
     let result = match command {
         Command::BEFORE => webring.before(site),
         Command::AFTER => webring.after(site),
         Command::RANDOM => webring.random(site),
+        Command::LIST => http::plain_text_response("200 OK", LIST),
     };
 
     match result {
