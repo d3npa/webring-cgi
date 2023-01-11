@@ -4,7 +4,8 @@ use std::str::FromStr;
 
 use webring_cgi::{http, webring::Webring};
 
-const LIST: &str = include_str!("includes/sites.txt");
+const LIST_URL: &str =
+    "https://raw.githubusercontent.com/d3npa/webring-cgi/main/src/includes/sites.txt";
 const INFO: &str = include_str!("includes/info.html");
 const USAGE: &str = "Must pass exactly one parameter: before | after | random | list";
 
@@ -49,13 +50,14 @@ fn main() -> Result<(), anyhow::Error> {
         Err(_) => http::bad_request(USAGE),
     };
 
-    let webring = Webring::new(LIST);
+    let list = reqwest::blocking::get(LIST_URL)?.text()?;
+    let webring = Webring::new(&list);
 
     let result = match command {
         Command::BEFORE => webring.before(site),
         Command::AFTER => webring.after(site),
         Command::RANDOM => webring.random(site),
-        Command::LIST => http::plain_text_response("200 OK", LIST),
+        Command::LIST => http::plain_text_response("200 OK", &list),
     };
 
     match result {
