@@ -1,6 +1,7 @@
 use qstring::QString;
 use std::env;
 use std::str::FromStr;
+use url::Url;
 
 use webring_cgi::{http, webring::Webring};
 
@@ -53,14 +54,14 @@ fn main() -> Result<(), anyhow::Error> {
     let webring = Webring::new(&list);
 
     let result = match command {
-        Command::BEFORE => webring.before(site),
-        Command::AFTER => webring.after(site),
-        Command::RANDOM => webring.random(site),
+        Command::BEFORE => webring.before(&Url::parse(site)?),
+        Command::AFTER => webring.after(&Url::parse(site)?),
+        Command::RANDOM => webring.random(&Url::parse(site)?),
         Command::LIST => http::plain_text_response("200 OK", &list),
     };
 
     match result {
-        Some(to_result) => http::redirect(to_result),
+        Some(to_result) => http::redirect(&to_result.to_string()),
         None => http::not_found("No result found"),
     }
 

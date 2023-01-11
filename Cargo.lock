@@ -931,6 +931,7 @@ dependencies = [
  "qstring",
  "rand",
  "reqwest",
+ "url",
 ]
 
 [[package]]
