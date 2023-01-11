@@ -16,7 +16,7 @@ pub fn html_text_response(status: &str, message: &str) -> ! {
     respond(status, "text/html", message);
 }
 
-pub fn redirect(to: &str) {
+pub fn redirect(to: &str) -> ! {
     print!("Status: 302 Found\r\n");
     print!("Location: {}\r\n", to);
     print!("\r\n");
