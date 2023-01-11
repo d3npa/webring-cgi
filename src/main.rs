@@ -4,8 +4,7 @@ use std::str::FromStr;
 
 use webring_cgi::{http, webring::Webring};
 
-const LIST_URL: &str =
-    "https://raw.githubusercontent.com/d3npa/webring-cgi/main/src/includes/sites.txt";
+const LIST_URL: &str = "https://raw.githubusercontent.com/VVX7/haunted-webring/main/webring.txt";
 const INFO: &str = include_str!("includes/info.html");
 const USAGE: &str = "Must pass exactly one parameter: before | after | random | list";
 
