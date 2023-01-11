@@ -32,38 +32,45 @@ impl FromStr for Command {
     }
 }
 
-fn main() -> Result<(), anyhow::Error> {
-    /* ?before=:domain ; ?after=:domain ; ?random_from=:domain */
+fn get_first_query_or_error() -> (String, String) {
     let query = env::var("QUERY_STRING")
         .unwrap_or_else(|_| http::internal_server_error("Error: Environment variable not found"));
 
     let qstring = QString::from(query.as_str());
-
     let pairs = qstring.to_pairs();
-    let (command, site) = match pairs.first() {
-        Some(p) => p,
-        None => http::html_text_response("200 OK", INFO),
-    };
 
-    let command = match Command::from_str(command) {
+    match pairs.first() {
+        Some(p) => (p.0.to_owned(), p.1.to_owned()),
+        None => http::html_text_response("200 OK", INFO),
+    }
+}
+
+fn match_command_or_show_usage(command: &str) -> Command {
+    match Command::from_str(command) {
         Ok(command) => command,
         Err(_) => http::bad_request(USAGE),
-    };
+    }
+}
 
+fn load_remote_webring() -> Result<Webring, anyhow::Error> {
     let list = reqwest::blocking::get(LIST_URL)?.text()?;
-    let webring = Webring::new(&list);
+    Ok(Webring::new(&list))
+}
+
+fn main() -> Result<(), anyhow::Error> {
+    let (command, site) = get_first_query_or_error();
+    let command = match_command_or_show_usage(&command);
+    let webring = load_remote_webring()?;
 
     let result = match command {
-        Command::BEFORE => webring.before(&Url::parse(site)?),
-        Command::AFTER => webring.after(&Url::parse(site)?),
-        Command::RANDOM => webring.random(&Url::parse(site)?),
-        Command::LIST => http::plain_text_response("200 OK", &list),
+        Command::BEFORE => webring.before(&Url::parse(&site)?),
+        Command::AFTER => webring.after(&Url::parse(&site)?),
+        Command::RANDOM => webring.random(&Url::parse(&site)?),
+        Command::LIST => http::redirect(LIST_URL),
     };
 
     match result {
         Some(to_result) => http::redirect(&to_result.to_string()),
         None => http::not_found("No result found"),
     }
-
-    Ok(())
 }
