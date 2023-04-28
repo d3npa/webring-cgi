@@ -57,15 +57,21 @@ fn load_remote_webring() -> Result<Webring, anyhow::Error> {
     Ok(Webring::new(&list))
 }
 
+fn parse_url(url: &str) -> Url {
+    Url::parse(url).unwrap_or_else(|_| {
+        http::bad_request("Invalid url provided");
+    })
+}
+
 fn main() -> Result<(), anyhow::Error> {
     let (command, site) = get_first_query_or_error();
     let command = match_command_or_show_usage(&command);
     let webring = load_remote_webring()?;
 
     let result = match command {
-        Command::BEFORE => webring.before(&Url::parse(&site)?),
-        Command::AFTER => webring.after(&Url::parse(&site)?),
-        Command::RANDOM => webring.random(&Url::parse(&site)?),
+        Command::BEFORE => webring.before(&parse_url(&site)),
+        Command::AFTER => webring.after(&parse_url(&site)),
+        Command::RANDOM => webring.random(&parse_url(&site)),
         Command::LIST => http::redirect(LIST_URL),
     };
 
