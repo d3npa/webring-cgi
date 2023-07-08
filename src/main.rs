@@ -1,44 +1,10 @@
-use qstring::QString;
-use std::env;
 use std::str::FromStr;
 use url::Url;
-
-use webring_cgi::{http, webring::Webring};
+use webring_cgi::errors::{CgiError, WebringError};
+use webring_cgi::{cgi, http, Webring};
 
 const LIST_URL: &str = "https://raw.githubusercontent.com/VVX7/haunted-webring/main/webring.txt";
 const INFO: &str = include_str!("includes/info.html");
-
-#[derive(Debug, thiserror::Error)]
-enum CgiError {
-    #[error("Environment Not Found")]
-    EnvNotFound,
-    #[error("Malformed Query")]
-    MalformedQuery,
-}
-
-#[derive(Copy, Clone, Debug, thiserror::Error)]
-enum WebringError {
-    #[error("Error Downloading List")]
-    DownloadingList,
-    #[error("Error Parsing URL")]
-    ParsingUrl,
-    #[error("Unknown Command. Valid commands: before | after | random | list")]
-    UnknownCommand,
-    #[error("No Result Found")]
-    NotFound,
-}
-
-impl From<reqwest::Error> for WebringError {
-    fn from(_: reqwest::Error) -> Self {
-        Self::DownloadingList
-    }
-}
-
-impl From<url::ParseError> for WebringError {
-    fn from(_: url::ParseError) -> Self {
-        Self::ParsingUrl
-    }
-}
 
 #[derive(PartialEq)]
 enum Command {
@@ -61,27 +27,7 @@ impl FromStr for Command {
     }
 }
 
-fn load_remote_webring() -> Result<Webring, WebringError> {
-    let list = reqwest::blocking::get(LIST_URL)?.text()?;
-    Ok(Webring::new(&list))
-}
-
-fn read_cgi_query() -> Result<(String, String), CgiError> {
-    let query = match env::var("QUERY_STRING") {
-        Ok(v) => v,
-        Err(_) => return Err(CgiError::EnvNotFound),
-    };
-
-    let query_string = QString::from(query.as_str());
-    let pairs = query_string.to_pairs();
-
-    match pairs.first() {
-        Some(p) => Ok((p.0.to_owned(), p.1.to_owned())),
-        None => Err(CgiError::MalformedQuery),
-    }
-}
-
-fn process_webring_command(command: &str, site: &str) -> Result<String, WebringError> {
+fn process_command(command: &str, site: &str) -> Result<String, WebringError> {
     let command = Command::from_str(command)?;
 
     // process List commands before attempting to load remote webring
@@ -89,7 +35,7 @@ fn process_webring_command(command: &str, site: &str) -> Result<String, WebringE
         return Ok(LIST_URL.to_owned());
     }
 
-    let webring = load_remote_webring()?;
+    let webring = Webring::load_remote(LIST_URL)?;
 
     let url = Url::parse(site)?;
 
@@ -104,13 +50,13 @@ fn process_webring_command(command: &str, site: &str) -> Result<String, WebringE
 }
 
 fn main() {
-    let (command, site) = match read_cgi_query() {
+    let (command, site) = match cgi::read_query() {
         Ok((c, s)) => (c, s),
         Err(CgiError::MalformedQuery) => http::html_text_response("200 OK", INFO),
         Err(e) /* CgiError::EnvNotFound */ => http::internal_server_error(&e.to_string()),
     };
 
-    match process_webring_command(&command, &site) {
+    match process_command(&command, &site) {
         Ok(to) => http::redirect(&to),
         Err(e) => {
             use WebringError::*;
